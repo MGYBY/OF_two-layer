@@ -1,0 +1,142 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.1.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      setFieldsDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+expressions
+(
+        mudDepthField
+        {
+                field alpha.mud; //field to initialise
+                keepPatches true;
+                expression "(pos().y<=layerIHeight) ? 1.0 : 0.0";
+                variables (
+                        "piVal=3.14159265358979;"
+                        "nd=1.0;"
+                        "hR=1.0;"
+                        "slope=0.06;"
+                        "muR=0.33333;"
+                        "rhoR=0.9868;"
+                        "distAmp=0.10;"
+                        "dimlesswl=3.0;"
+                        "LX=dimlesswl/slope*nd;"
+                        "layerIHeight=nd*(1.0+distAmp*sin(2.0*piVal*pos().x/LX));"
+                        "layerIIHeight=nd*(1.0+hR)*(1.0+distAmp*sin(2.0*piVal*pos().x/LX));"
+                );
+        }
+
+        waterDepthField
+        {
+                field alpha.water; //field to initialise
+                keepPatches true;
+                expression "(pos().y>layerIHeight && pos().y<=layerIIHeight) ? 1.0 : 0.0";
+                variables (
+                        "piVal=3.14159265358979;"
+                        "nd=1.0;"
+                        "hR=1.0;"
+                        "slope=0.06;"
+                        "muR=0.33333;"
+                        "rhoR=0.9868;"
+                        "distAmp=0.10;"
+                        "dimlesswl=3.0;"
+                        "LX=dimlesswl/slope*nd;"
+                        "layerIHeight=nd*(1.0+distAmp*sin(2.0*piVal*pos().x/LX));"
+                        "layerIIHeight=nd*(1.0+hR)*(1.0+distAmp*sin(2.0*piVal*pos().x/LX));"
+                );
+        }
+
+        airDepthField
+        {
+                field alpha.air; //field to initialise
+                keepPatches false;
+                expression "(pos().y>layerIIHeight) ? 1.0 : 0.0";
+                variables (
+                        "piVal=3.14159265358979;"
+                        "nd=1.0;"
+                        "hR=1.0;"
+                        "slope=0.06;"
+                        "muR=0.33333;"
+                        "rhoR=0.9868;"
+                        "distAmp=0.10;"
+                        "dimlesswl=3.0;"
+                        "LX=dimlesswl/slope*nd;"
+                        "layerIHeight=nd*(1.0+distAmp*sin(2.0*piVal*pos().x/LX));"
+                        "layerIIHeight=nd*(1.0+hR)*(1.0+distAmp*sin(2.0*piVal*pos().x/LX));"
+                );
+        }
+
+        pHydro
+        {
+                field p; //field to initialise
+                // hydrostatic pressure for IC
+                expression "(pos().y<=layerIIHeight) ? ((pos().y<=layerIHeight) ? (redGrav*rhoWater*(layerIIHeight-layerIHeight)+redGrav*rhoMud*(layerIHeight-pos().y)) : redGrav*rhoWater*(layerIIHeight-pos().y)) : 0.0-redGrav*rhoAir*(pos().y-layerIIHeight)";
+                // condition "pos().y<=max(pos().y)";
+                keepPatches true;
+                variables (
+                        "piVal=3.14159265358979;"
+                        "nd=1.0;"
+                        "hR=1.0;"
+                        "grav=1.0;"
+                        "slope=0.06;"
+                        "muR=0.33333;"
+                        "rhoR=0.9868;"
+                        "rhoMud=1.0;"
+                        "rhoWater=rhoMud*rhoR;"
+                        "rhoAir=rhoWater/100.0;"
+                        "distAmp=0.10;"
+                        "dimlesswl=3.0;"
+                        "LX=dimlesswl/slope*nd;"
+                        "fr1=0.60;"
+                        "redGrav=(1.0/fr1*fr1)*sqrt(1-slope*slope);"
+                        "layerIHeight=nd*(1.0+distAmp*sin(2.0*piVal*pos().x/LX));"
+                        "layerIIHeight=nd*(1.0+hR)*(1.0+distAmp*sin(2.0*piVal*pos().x/LX));"
+                );
+        }
+
+        velocityField
+	{
+                field U;
+                keepPatches true;
+                create false;
+                // expression "(pos().y<=layerIIHeight) ? (pos().y<=layerIHeight ? uIProf*pow((layerIHeight/nd), 0.50)*vector(1,0,0) : uIIProf*pow((layerIIHeight/(nd*(1.0+hR))),0.50)*vector(1,0,0)) : (us*1.05)*pow((layerIIHeight/(nd*(1.0+hR))), 0.50)*vector(1,0,0)";
+                expression "(pos().y<=layerIIHeight) ? (pos().y<=layerIHeight ? uIProf*pow((layerIHeight/nd), 0.50)*vector(1,0,0) : uIIProf*pow((layerIIHeight/(nd*(1.0+hR))),0.50)*vector(1,0,0)) : (0.0*1.05)*pow((layerIIHeight/(nd*(1.0+hR))), 0.50)*vector(1,0,0)";
+                // expression "nv*vector(1,0,0)";
+                variables (
+			"piVal=3.14159265358979;"
+                        "nd=1.0;"
+                        "hR=1.0;"
+                        "grav=1.0;"
+                        "slope=0.06;"
+                        "muR=0.33333;"
+                        "rhoR=0.9868;"
+                        "rhoMud=1.0;"
+                        "rhoWater=rhoMud*rhoR;"
+                        "rhoAir=rhoWater/100.0;"
+                        "distAmp=0.10;"
+                        "dimlesswl=3.0;"
+                        "LX=dimlesswl/slope*nd;"
+                        "fr1=0.60;"
+                        "redGrav=(1.0/fr1*fr1)*sqrt(1-slope*slope);"
+                        "layerIHeight=nd*(1.0+distAmp*sin(2.0*piVal*pos().x/LX));"
+                        "layerIIHeight=nd*(1.0+hR)*(1.0+distAmp*sin(2.0*piVal*pos().x/LX));"
+                        "termI=2.0+3.0*hR*rhoR;"
+                        "us=(3.0*muR+3.0*rhoR+6.0*hR*muR*rhoR)/(muR*termI);"
+                        "uIProf=(3.0*pos().y*(2.0+2.0*hR*rhoR))/termI-3.0*(pos().y*pos().y)/termI;"
+                        "uIIProf=(3.0*muR-3.0*rhoR-6.0*hR*rhoR+hR*muR*rhoR)/(termI*muR)+pos().y*(6.0*rhoR+6.0*hR*rhoR)/(termI*muR)-3.0*(pos().y*pos().y)*(rhoR/(termI*muR));"
+		);
+        }
+);
+
+// ************************************************************************* //

@@ -1,0 +1,105 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  5                                     |
+|   \\  /    A nd           | Web:      www.OpenFOAM.org                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      blockMeshDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+convertToMeters 1;
+
+normalDepth 1.0; //layer 1
+ndepth 12; //layer 1
+depthRatio 1.0;
+
+dimlesswl 3.0;
+channelSlope 0.06;
+
+LX #calc "$dimlesswl/$channelSlope*$normalDepth";
+LY #calc "$normalDepth*(1.0+$depthRatio)*3.01";
+
+NX1 #calc "round($LX*$ndepth/$normalDepth)";
+NY1 #calc "round($LY*$ndepth/$normalDepth)";
+
+vertices
+(
+    (0 0 0)
+    ($LX 0 0)
+    ($LX $LY 0)
+    (0 $LY 0)
+    (0 0 0.1)
+    ($LX 0 0.1)
+    ($LX $LY 0.1)
+    (0 $LY 0.1)
+);
+
+blocks
+(
+    hex (0 1 2 3 4 5 6 7) ($NX1 $NY1 1) simpleGrading (1 1 1)
+  
+);
+
+edges
+(
+);
+
+boundary
+(
+    inflow
+    {
+        type cyclic;
+        neighbourPatch    rightWall;
+        faces
+        (
+            (0 4 7 3)
+        );
+    }
+    rightWall
+    {
+        type cyclic;
+        neighbourPatch    inflow;
+        faces
+        (
+            (1 5 6 2)
+        );
+    }
+    lowerWall
+    {
+        type wall;
+        faces
+        (
+            (0 1 5 4)
+        );
+    }
+    atmosphere
+    {
+        type patch;
+        faces
+        (
+            (3 2 6 7)
+        );
+    }
+    frontAndBack
+    {
+        type empty;
+        faces
+        (
+            (0 1 2 3)
+            (4 5 6 7)
+        );
+    }
+);
+
+mergePatchPairs
+(
+);
+
+// ************************************************************************* //
